@@ -24,7 +24,6 @@
             margin: 0 auto;
         }
 
-        /* 大厅样式 */
         .lobby {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 40px;
@@ -147,7 +146,6 @@
             text-align: left;
         }
 
-        /* 游戏界面 */
         .game-header {
             display: flex;
             justify-content: space-between;
@@ -202,7 +200,6 @@
             transform: scale(1.05);
         }
 
-        /* 玩家区域 */
         .opponent-zone, .player-zone {
             background: rgba(0,0,0,0.4);
             border-radius: 20px;
@@ -266,7 +263,6 @@
             margin: 10px 0;
         }
 
-        /* 卡牌样式 */
         .card {
             background: linear-gradient(135deg, #667eea, #764ba2);
             border-radius: 12px;
@@ -337,7 +333,6 @@
             min-height: 150px;
         }
 
-        /* 反应室 */
         .reaction-chamber {
             background: rgba(0,0,0,0.7);
             border-radius: 20px;
@@ -371,7 +366,6 @@
             min-height: 50px;
         }
 
-        /* 按钮 */
         .action-buttons {
             display: flex;
             gap: 15px;
@@ -430,7 +424,6 @@
             transform: scale(1.02);
         }
 
-        /* 效果标记 */
         .effect-badge {
             background: rgba(0,0,0,0.6);
             padding: 4px 10px;
@@ -478,7 +471,6 @@
 </head>
 <body>
     <div class="game-container">
-        <!-- 大厅界面 -->
         <div id="lobby" class="lobby">
             <h1>🧪 纸片化学</h1>
             <p class="subtitle">元素周期表卡牌对战游戏 · 行动点数系统</p>
@@ -508,7 +500,6 @@
             </div>
         </div>
 
-        <!-- 游戏界面 -->
         <div id="game" style="display: none;">
             <div class="game-header">
                 <div class="room-badge">
@@ -525,7 +516,6 @@
                 </div>
             </div>
 
-            <!-- 对手区域 -->
             <div class="opponent-zone">
                 <div class="player-card">
                     <div class="avatar">⚔️</div>
@@ -546,7 +536,6 @@
                 </div>
             </div>
 
-            <!-- 反应室 -->
             <div class="reaction-chamber">
                 <div class="reaction-header">
                     <span>⚡ 反应室</span>
@@ -558,7 +547,6 @@
                 <div class="reaction-animation" id="reactionAnimation"></div>
             </div>
 
-            <!-- 玩家区域 -->
             <div class="player-zone">
                 <div class="battlefield" id="playerBoard"></div>
                 <div class="player-card">
@@ -591,7 +579,6 @@
         let selectedAttacker = null;
         let reactionLog = [];
 
-        // 连接服务器
         function connect() {
             socket = io();
             
@@ -667,7 +654,6 @@
             });
         }
 
-        // 创建房间
         function createRoom() {
             const name = document.getElementById('playerName').value.trim();
             if (!name) {
@@ -683,7 +669,6 @@
             showGame();
         }
 
-        // 加入房间
         function joinRoom() {
             const roomId = document.getElementById('roomCode').value.trim().toUpperCase();
             const name = document.getElementById('playerName').value.trim();
@@ -705,18 +690,15 @@
             showGame();
         }
 
-        // 显示游戏界面
         function showGame() {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('game').style.display = 'block';
         }
 
-        // 更新游戏状态
         function updateGameState(state) {
             if (!state) return;
             currentGameState = state;
             
-            // 更新玩家信息
             document.getElementById('playerNameDisplay').textContent = state.me.name;
             document.getElementById('playerHealth').textContent = state.me.health;
             document.getElementById('playerArmor').textContent = state.me.armor;
@@ -724,7 +706,6 @@
             document.getElementById('playerMaxPoints').textContent = state.me.points.max;
             document.getElementById('playerDeckSize').textContent = state.me.deckSize;
             
-            // 更新对手信息
             if (state.opponent.name && state.opponent.name !== '对手') {
                 document.getElementById('opponentName').textContent = state.opponent.name;
             }
@@ -735,7 +716,6 @@
             document.getElementById('opponentDeckSize').textContent = state.opponent.deckSize;
             document.getElementById('opponentHandSize').textContent = state.opponent.handSize;
             
-            // 回合信息
             if (state.gameState === 'playing') {
                 const turnText = state.isMyTurn ? '🔵 你的回合' : '🔴 对手回合';
                 document.getElementById('turnText').textContent = turnText;
@@ -743,7 +723,6 @@
                 document.getElementById('endTurnBtn').disabled = !state.isMyTurn;
             }
             
-            // 更新界面
             if (state.me.hand) updateHand(state.me.hand);
             if (state.me.board) updateBoard('playerBoard', state.me.board, true);
             if (state.opponent.board) updateBoard('opponentBoard', state.opponent.board, false);
@@ -751,7 +730,6 @@
             updateEffects('opponentEffects', state.opponent.activeEffects);
         }
 
-        // 更新手牌
         function updateHand(hand) {
             const container = document.getElementById('playerHand');
             if (!container) return;
@@ -779,7 +757,6 @@
             });
         }
 
-        // 更新战场
         function updateBoard(elementId, board, isPlayerBoard) {
             const container = document.getElementById(elementId);
             if (!container) return;
@@ -814,7 +791,6 @@
                 container.appendChild(cardDiv);
             });
             
-            // 添加直接攻击按钮
             if (!isPlayerBoard && currentGameState?.isMyTurn && selectedAttacker !== null && currentGameState.opponent.health > 0) {
                 const attackBtn = document.createElement('div');
                 attackBtn.className = 'card';
@@ -830,7 +806,6 @@
             }
         }
 
-        // 更新效果标记
         function updateEffects(elementId, effects) {
             const container = document.getElementById(elementId);
             if (!container) return;
@@ -847,7 +822,6 @@
             }
         }
 
-        // 选择攻击者
         function selectAttacker(id) {
             if (!currentGameState?.isMyTurn) return;
             selectedAttacker = id;
@@ -856,7 +830,6 @@
             addMessage(`🔨 选择攻击者，点击目标进行攻击`, 'action');
         }
 
-        // 攻击玩家
         function attackPlayer() {
             if (!selectedAttacker) return;
             socket.emit('attack', {
@@ -868,7 +841,6 @@
             selectedAttacker = null;
         }
 
-        // 攻击随从
         function attackMinion(targetId) {
             if (!selectedAttacker) return;
             socket.emit('attack', {
@@ -880,7 +852,6 @@
             selectedAttacker = null;
         }
 
-        // 出牌
         function playCard(index) {
             if (!currentGameState?.isMyTurn) return;
             const card = currentGameState.me.hand[index];
@@ -894,14 +865,12 @@
             });
         }
 
-        // 结束回合
         function endTurn() {
             if (!currentGameState?.isMyTurn) return;
             socket.emit('endTurn', { roomId: currentRoomId });
             selectedAttacker = null;
         }
 
-        // 取消选择
         function resetSelection() {
             selectedAttacker = null;
             if (currentGameState) {
@@ -911,7 +880,6 @@
             addMessage('🔄 已取消选择', 'info');
         }
 
-        // 添加消息
         function addMessage(msg, type = 'info') {
             const container = document.getElementById('reactionMessages');
             if (!container) return;
@@ -927,7 +895,6 @@
             while (container.children.length > 30) container.removeChild(container.firstChild);
         }
 
-        // 显示动画
         function showAnimation(type) {
             const animDiv = document.getElementById('reactionAnimation');
             if (!animDiv) return;
@@ -936,7 +903,6 @@
             setTimeout(() => { if (animDiv.textContent) animDiv.textContent = ''; }, 2000);
         }
 
-        // 显示反应记录
         function showReactionLog() {
             if (reactionLog.length === 0) {
                 alert('暂无反应记录');
@@ -949,7 +915,6 @@
             alert(log);
         }
 
-        // 显示错误
         function showError(msg) {
             const toast = document.createElement('div');
             toast.className = 'error-toast';
@@ -958,7 +923,6 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // 回车键支持
         document.getElementById('playerName')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') createRoom();
         });
@@ -966,7 +930,6 @@
             if (e.key === 'Enter') joinRoom();
         });
         
-        // 房间代码自动大写
         document.getElementById('roomCode')?.addEventListener('input', (e) => {
             e.target.value = e.target.value.toUpperCase();
         });
