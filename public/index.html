@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🧪 纸片化学 - 元素卡牌对战</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Poppins', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .game-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 大厅样式 */
+        .lobby {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 40px;
+            padding: 50px;
+            max-width: 550px;
+            margin: 80px auto;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            animation: fadeIn 0.5s ease;
+            color: #333;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .lobby h1 {
+            font-size: 48px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .element-badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 25px 0;
+        }
+
+        .badge {
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .badge.alkali { background: #ff6b6b; }
+        .badge.halogen { background: #4ecdc4; }
+        .badge.noble { background: #95e77e; }
+        .badge.metal { background: #ffd93d; color: #333; }
+
+        .lobby input {
+            width: 80%;
+            padding: 14px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 30px;
+            font-size: 16px;
+            margin: 15px 0;
+        }
+
+        .lobby input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-create, .btn-join {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-create {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-join {
+            background: #48c774;
+            color: white;
+        }
+
+        .btn-create:hover, .btn-join:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .join-section {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .join-section input {
+            width: 180px;
+            margin: 0;
+            text-transform: uppercase;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .tips {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .tip {
+            background: #f0f4ff;
+            padding: 10px;
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        /* 游戏界面 */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .room-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .room-code {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-family: monospace;
+            font-size: 20px;
+            letter-spacing: 2px;
+        }
+
+        .turn-info {
+            text-align: center;
+        }
+
+        .turn-text {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .turn-number {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .reaction-log-btn {
+            cursor: pointer;
+            padding: 8px 20px;
+            background: #ff6b6b;
+            border-radius: 25px;
+            transition: transform 0.2s;
+        }
+
+        .reaction-log-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* 玩家区域 */
+        .opponent-zone, .player-zone {
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .player-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .avatar {
+            font-size: 48px;
+        }
+
+        .player-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .player-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+
+        .player-stats span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .points-bar {
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            padding: 5px 10px;
+        }
+
+        .points-value {
+            color: #ffd93d;
+            font-weight: bold;
+        }
+
+        .battlefield {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            min-height: 130px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            margin: 10px 0;
+        }
+
+        /* 卡牌样式 */
+        .card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 12px;
+            padding: 10px;
+            width: 100px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .card:hover {
+            transform: translateY(-8px) rotate(2deg);
+        }
+
+        .card.alkali_metal { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+        .card.halogen { background: linear-gradient(135deg, #4ecdc4, #44bdaf); }
+        .card.noble_gas { background: linear-gradient(135deg, #95e77e, #7fcdb5); }
+        .card.transition_metal { background: linear-gradient(135deg, #ffd93d, #f6b93b); color: #333; }
+        .card.noble_metal { background: linear-gradient(135deg, #f9ca24, #f0932b); color: #333; }
+        .card.nonmetal { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+        .card.alkaline_earth { background: linear-gradient(135deg, #ffa502, #ff7f50); }
+        .card.compound { background: linear-gradient(135deg, #00cec9, #00b894); }
+
+        .card-symbol {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .card-name {
+            font-size: 11px;
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        .card-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        .card-cost {
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            background: #ffd93d;
+            color: #333;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 11px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .hand {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+            min-height: 150px;
+        }
+
+        /* 反应室 */
+        .reaction-chamber {
+            background: rgba(0,0,0,0.7);
+            border-radius: 20px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .reaction-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .reaction-messages {
+            min-height: 60px;
+            font-size: 14px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .reaction-messages div {
+            margin: 5px 0;
+        }
+
+        .reaction-animation {
+            text-align: center;
+            font-size: 24px;
+            min-height: 50px;
+        }
+
+        /* 按钮 */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .btn-end, .btn-reset {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-end {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-end:hover:not(:disabled) {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        .btn-reset {
+            background: #95e77e;
+            color: #333;
+        }
+
+        .btn-reset:hover {
+            background: #7fcdb5;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .cant-play {
+            opacity: 0.5;
+            filter: grayscale(0.3);
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .cant-play:hover {
+            transform: none !important;
+        }
+
+        .selected {
+            border: 3px solid gold !important;
+            transform: scale(1.02);
+        }
+
+        /* 效果标记 */
+        .effect-badge {
+            background: rgba(0,0,0,0.6);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        .error-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff4444;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .waiting-message {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 15px;
+            margin: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .card { width: 75px; padding: 6px; }
+            .card-symbol { font-size: 20px; }
+            .card-cost { width: 20px; height: 20px; font-size: 10px; }
+            .player-stats { gap: 10px; }
+            .lobby { margin: 40px 15px; padding: 30px 20px; }
+            .lobby h1 { font-size: 36px; }
+            .player-card { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- 大厅界面 -->
+        <div id="lobby" class="lobby">
+            <h1>🧪 纸片化学</h1>
+            <p class="subtitle">元素周期表卡牌对战游戏 · 行动点数系统</p>
+            
+            <div class="element-badges">
+                <span class="badge alkali">碱金属</span>
+                <span class="badge halogen">卤素</span>
+                <span class="badge noble">稀有气体</span>
+                <span class="badge metal">过渡金属</span>
+            </div>
+
+            <input type="text" id="playerName" placeholder="玩家名称" maxlength="16" autocomplete="off">
+            <button class="btn-create" onclick="createRoom()">🔬 创建房间</button>
+            
+            <div class="join-section">
+                <input type="text" id="roomCode" placeholder="房间代码" maxlength="6" autocomplete="off">
+                <button class="btn-join" onclick="joinRoom()">🧪 加入房间</button>
+            </div>
+
+            <div class="tips">
+                <div class="tip">💡 碱金属遇水会爆炸！</div>
+                <div class="tip">⚡ 卤素具有强氧化性</div>
+                <div class="tip">🛡️ 稀有气体几乎不反应</div>
+                <div class="tip">⚔️ 随从可以攻击对手</div>
+                <div class="tip">⭐ 行动点数每回合回复3点</div>
+                <div class="tip">💎 卡牌消耗行动点数</div>
+            </div>
+        </div>
+
+        <!-- 游戏界面 -->
+        <div id="game" style="display: none;">
+            <div class="game-header">
+                <div class="room-badge">
+                    <span>🎮</span>
+                    <span>房间:</span>
+                    <span class="room-code" id="roomId">----</span>
+                </div>
+                <div class="turn-info">
+                    <div id="turnText" class="turn-text">等待玩家加入...</div>
+                    <div id="turnNumber" class="turn-number">等待开始</div>
+                </div>
+                <div class="reaction-log-btn" onclick="showReactionLog()">
+                    📜 反应记录
+                </div>
+            </div>
+
+            <!-- 对手区域 -->
+            <div class="opponent-zone">
+                <div class="player-card">
+                    <div class="avatar">⚔️</div>
+                    <div>
+                        <div class="player-name" id="opponentName">等待对手...</div>
+                        <div class="player-stats">
+                            <span>❤️ <span id="opponentHealth">-</span></span>
+                            <span>🛡️ <span id="opponentArmor">-</span></span>
+                            <span>⭐ <span id="opponentPoints">-</span>/<span id="opponentMaxPoints">-</span></span>
+                            <span>📚 <span id="opponentDeckSize">-</span></span>
+                            <span>✋ <span id="opponentHandSize">-</span></span>
+                        </div>
+                    </div>
+                    <div id="opponentEffects"></div>
+                </div>
+                <div class="battlefield" id="opponentBoard">
+                    <div class="waiting-message">⏳ 等待对手加入...</div>
+                </div>
+            </div>
+
+            <!-- 反应室 -->
+            <div class="reaction-chamber">
+                <div class="reaction-header">
+                    <span>⚡ 反应室</span>
+                    <span>🧪 化学反应会触发特殊效果</span>
+                </div>
+                <div class="reaction-messages" id="reactionMessages">
+                    <div>✨ 欢迎来到纸片化学世界！</div>
+                </div>
+                <div class="reaction-animation" id="reactionAnimation"></div>
+            </div>
+
+            <!-- 玩家区域 -->
+            <div class="player-zone">
+                <div class="battlefield" id="playerBoard"></div>
+                <div class="player-card">
+                    <div class="avatar">🧪</div>
+                    <div>
+                        <div class="player-name" id="playerNameDisplay">玩家</div>
+                        <div class="player-stats">
+                            <span>❤️ <span id="playerHealth">-</span></span>
+                            <span>🛡️ <span id="playerArmor">-</span></span>
+                            <span class="points-bar">⭐ <span id="playerPoints">-</span>/<span id="playerMaxPoints">-</span></span>
+                            <span>📚 <span id="playerDeckSize">-</span></span>
+                        </div>
+                    </div>
+                    <div id="playerEffects"></div>
+                </div>
+                <div class="hand" id="playerHand"></div>
+                <div class="action-buttons">
+                    <button id="endTurnBtn" class="btn-end" onclick="endTurn()" disabled>⏸️ 结束回合</button>
+                    <button class="btn-reset" onclick="resetSelection()">🔄 取消选择</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket;
+        let currentRoomId;
+        let currentGameState;
+        let selectedAttacker = null;
+        let reactionLog = [];
+
+        // 连接服务器
+        function connect() {
+            socket = io();
+            
+            socket.on('connect', () => {
+                console.log('Socket connected:', socket.id);
+                addMessage('✨ 已连接到游戏服务器', 'success');
+            });
+            
+            socket.on('roomCreated', (data) => {
+                currentRoomId = data.roomId;
+                document.getElementById('roomId').textContent = currentRoomId;
+                addMessage(`🔬 房间创建成功！代码: ${currentRoomId}`, 'success');
+                addMessage(`⏳ 等待其他玩家加入...`, 'info');
+            });
+            
+            socket.on('roomJoined', (data) => {
+                currentRoomId = data.roomId;
+                document.getElementById('roomId').textContent = currentRoomId;
+                addMessage(`🧪 成功加入房间 ${currentRoomId}！`, 'success');
+                addMessage(`⏳ 等待游戏开始...`, 'info');
+            });
+            
+            socket.on('playerJoined', (data) => {
+                addMessage(`👤 ${data.players.map(p => p.name).join(', ')} 加入了房间`, 'success');
+            });
+            
+            socket.on('gameStarted', (data) => {
+                addMessage('🎯 游戏开始！元素对决！', 'success');
+                updateGameState(data.gameState);
+            });
+            
+            socket.on('gameStateUpdate', (data) => {
+                updateGameState(data);
+            });
+            
+            socket.on('actionNotification', (data) => {
+                if (data.action === 'playCard') {
+                    addMessage(`📜 ${data.player === socket.id ? '你' : '对手'} 使用了 ${data.card?.name}！${data.effect || ''}`, 'action');
+                } else if (data.action === 'attack') {
+                    addMessage(`⚔️ 攻击！造成 ${data.damage} 点伤害`, 'combat');
+                } else if (data.action === 'endTurn') {
+                    addMessage(`⏸️ ${data.player === socket.id ? '你' : '对手'} 结束了回合`, 'info');
+                }
+            });
+            
+            socket.on('chemicalReaction', (data) => {
+                addMessage(`🧪✨ ${data.message}`, 'reaction');
+                showAnimation(data.type);
+                reactionLog.unshift({
+                    time: new Date().toLocaleTimeString(),
+                    message: data.message
+                });
+            });
+            
+            socket.on('gameEnded', (data) => {
+                addMessage(`🏆 游戏结束！胜利者: ${data.winner}！`, 'success');
+                document.getElementById('endTurnBtn').disabled = true;
+                setTimeout(() => {
+                    if (confirm('游戏结束！是否返回大厅？')) {
+                        location.reload();
+                    }
+                }, 3000);
+            });
+            
+            socket.on('playerDisconnected', () => {
+                addMessage('⚠️ 对手离开了房间', 'warning');
+                document.getElementById('endTurnBtn').disabled = true;
+            });
+            
+            socket.on('error', (message) => {
+                addMessage(`❌ ${message}`, 'error');
+                showError(message);
+            });
+        }
+
+        // 创建房间
+        function createRoom() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) {
+                showError('请输入玩家名称');
+                return;
+            }
+            if (name.length < 1 || name.length > 16) {
+                showError('名称长度应为1-16个字符');
+                return;
+            }
+            connect();
+            socket.emit('createRoom', name);
+            showGame();
+        }
+
+        // 加入房间
+        function joinRoom() {
+            const roomId = document.getElementById('roomCode').value.trim().toUpperCase();
+            const name = document.getElementById('playerName').value.trim();
+            if (!roomId) {
+                showError('请输入房间代码');
+                return;
+            }
+            if (!name) {
+                showError('请输入玩家名称');
+                return;
+            }
+            if (name.length < 1 || name.length > 16) {
+                showError('名称长度应为1-16个字符');
+                return;
+            }
+            console.log('Joining room:', roomId, 'as:', name);
+            connect();
+            socket.emit('joinRoom', { roomId: roomId, playerName: name });
+            showGame();
+        }
+
+        // 显示游戏界面
+        function showGame() {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+        }
+
+        // 更新游戏状态
+        function updateGameState(state) {
+            if (!state) return;
+            currentGameState = state;
+            
+            // 更新玩家信息
+            document.getElementById('playerNameDisplay').textContent = state.me.name;
+            document.getElementById('playerHealth').textContent = state.me.health;
+            document.getElementById('playerArmor').textContent = state.me.armor;
+            document.getElementById('playerPoints').textContent = state.me.points.current;
+            document.getElementById('playerMaxPoints').textContent = state.me.points.max;
+            document.getElementById('playerDeckSize').textContent = state.me.deckSize;
+            
+            // 更新对手信息
+            if (state.opponent.name && state.opponent.name !== '对手') {
+                document.getElementById('opponentName').textContent = state.opponent.name;
+            }
+            document.getElementById('opponentHealth').textContent = state.opponent.health;
+            document.getElementById('opponentArmor').textContent = state.opponent.armor;
+            document.getElementById('opponentPoints').textContent = state.opponent.points?.current || '-';
+            document.getElementById('opponentMaxPoints').textContent = state.opponent.points?.max || '-';
+            document.getElementById('opponentDeckSize').textContent = state.opponent.deckSize;
+            document.getElementById('opponentHandSize').textContent = state.opponent.handSize;
+            
+            // 回合信息
+            if (state.gameState === 'playing') {
+                const turnText = state.isMyTurn ? '🔵 你的回合' : '🔴 对手回合';
+                document.getElementById('turnText').textContent = turnText;
+                document.getElementById('turnNumber').textContent = `第${state.turnNumber}回合`;
+                document.getElementById('endTurnBtn').disabled = !state.isMyTurn;
+            }
+            
+            // 更新界面
+            if (state.me.hand) updateHand(state.me.hand);
+            if (state.me.board) updateBoard('playerBoard', state.me.board, true);
+            if (state.opponent.board) updateBoard('opponentBoard', state.opponent.board, false);
+            updateEffects('playerEffects', state.me.activeEffects);
+            updateEffects('opponentEffects', state.opponent.activeEffects);
+        }
+
+        // 更新手牌
+        function updateHand(hand) {
+            const container = document.getElementById('playerHand');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            if (!hand || hand.length === 0) return;
+            
+            hand.forEach((card, idx) => {
+                const canPlay = currentGameState?.me?.points?.current >= card.cost;
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `card ${card.type} ${!canPlay ? 'cant-play' : ''}`;
+                cardDiv.innerHTML = `
+                    <div class="card-cost">⭐${card.cost}</div>
+                    <div class="card-symbol">${card.symbol || card.name.substring(0,2)}</div>
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-stats">
+                        ${card.attack !== undefined ? `<span>⚔️ ${card.attack}</span>` : ''}
+                        ${card.health !== undefined ? `<span>❤️ ${card.health}</span>` : ''}
+                        ${card.value ? `<span>✨ ${card.value}</span>` : ''}
+                    </div>
+                    <div style="font-size:9px; margin-top:4px; opacity:0.8;">${card.description || ''}</div>
+                `;
+                cardDiv.onclick = () => playCard(idx);
+                container.appendChild(cardDiv);
+            });
+        }
+
+        // 更新战场
+        function updateBoard(elementId, board, isPlayerBoard) {
+            const container = document.getElementById(elementId);
+            if (!container) return;
+            container.innerHTML = '';
+            
+            if (!board || board.length === 0) return;
+            
+            board.forEach((minion) => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `card ${minion.type}`;
+                cardDiv.innerHTML = `
+                    <div class="card-symbol">${minion.symbol || minion.name.substring(0,2)}</div>
+                    <div class="card-name">${minion.name}</div>
+                    <div class="card-stats">
+                        <span>⚔️ ${minion.attack}</span>
+                        <span>❤️ ${minion.health}</span>
+                    </div>
+                `;
+                
+                if (isPlayerBoard && currentGameState?.isMyTurn && !minion.hasAttacked) {
+                    cardDiv.onclick = () => selectAttacker(minion.id);
+                    if (selectedAttacker === minion.id) {
+                        cardDiv.classList.add('selected');
+                    }
+                    cardDiv.style.cursor = 'pointer';
+                } else if (!isPlayerBoard && currentGameState?.isMyTurn && selectedAttacker !== null) {
+                    cardDiv.onclick = () => attackMinion(minion.id);
+                    cardDiv.style.cursor = 'pointer';
+                    cardDiv.style.border = '2px solid #ffd93d';
+                }
+                
+                container.appendChild(cardDiv);
+            });
+            
+            // 添加直接攻击按钮
+            if (!isPlayerBoard && currentGameState?.isMyTurn && selectedAttacker !== null && currentGameState.opponent.health > 0) {
+                const attackBtn = document.createElement('div');
+                attackBtn.className = 'card';
+                attackBtn.style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a24)';
+                attackBtn.innerHTML = `
+                    <div class="card-symbol">⚡</div>
+                    <div class="card-name">直接攻击</div>
+                    <div class="card-stats">攻击对手本体</div>
+                `;
+                attackBtn.onclick = () => attackPlayer();
+                attackBtn.style.cursor = 'pointer';
+                container.appendChild(attackBtn);
+            }
+        }
+
+        // 更新效果标记
+        function updateEffects(elementId, effects) {
+            const container = document.getElementById(elementId);
+            if (!container) return;
+            container.innerHTML = '';
+            if (effects && effects.length > 0) {
+                effects.forEach(effect => {
+                    const badge = document.createElement('span');
+                    badge.className = 'effect-badge';
+                    if (effect.type === 'corrosion') badge.textContent = '🦠 腐蚀';
+                    if (effect.type === 'radiation') badge.textContent = '☢️ 辐射';
+                    if (effect.type === 'oxidation') badge.textContent = '⚡ 氧化';
+                    container.appendChild(badge);
+                });
+            }
+        }
+
+        // 选择攻击者
+        function selectAttacker(id) {
+            if (!currentGameState?.isMyTurn) return;
+            selectedAttacker = id;
+            updateBoard('playerBoard', currentGameState.me.board, true);
+            updateBoard('opponentBoard', currentGameState.opponent.board, false);
+            addMessage(`🔨 选择攻击者，点击目标进行攻击`, 'action');
+        }
+
+        // 攻击玩家
+        function attackPlayer() {
+            if (!selectedAttacker) return;
+            socket.emit('attack', {
+                roomId: currentRoomId,
+                attackerId: selectedAttacker,
+                targetType: 'player',
+                targetId: null
+            });
+            selectedAttacker = null;
+        }
+
+        // 攻击随从
+        function attackMinion(targetId) {
+            if (!selectedAttacker) return;
+            socket.emit('attack', {
+                roomId: currentRoomId,
+                attackerId: selectedAttacker,
+                targetType: 'minion',
+                targetId: targetId
+            });
+            selectedAttacker = null;
+        }
+
+        // 出牌
+        function playCard(index) {
+            if (!currentGameState?.isMyTurn) return;
+            const card = currentGameState.me.hand[index];
+            if (currentGameState.me.points.current < card.cost) {
+                addMessage(`⭐ 行动点数不足！需要${card.cost}点，当前${currentGameState.me.points.current}点`, 'error');
+                return;
+            }
+            socket.emit('playCard', {
+                roomId: currentRoomId,
+                cardIndex: index
+            });
+        }
+
+        // 结束回合
+        function endTurn() {
+            if (!currentGameState?.isMyTurn) return;
+            socket.emit('endTurn', { roomId: currentRoomId });
+            selectedAttacker = null;
+        }
+
+        // 取消选择
+        function resetSelection() {
+            selectedAttacker = null;
+            if (currentGameState) {
+                updateBoard('playerBoard', currentGameState.me.board, true);
+                updateBoard('opponentBoard', currentGameState.opponent.board, false);
+            }
+            addMessage('🔄 已取消选择', 'info');
+        }
+
+        // 添加消息
+        function addMessage(msg, type = 'info') {
+            const container = document.getElementById('reactionMessages');
+            if (!container) return;
+            const div = document.createElement('div');
+            const colors = {
+                success: '#95e77e', error: '#ff6b6b', reaction: '#ffd93d',
+                combat: '#ff9f43', action: '#4ecdc4', info: '#a29bfe', warning: '#feca57'
+            };
+            div.style.color = colors[type] || colors.info;
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            container.appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            while (container.children.length > 30) container.removeChild(container.firstChild);
+        }
+
+        // 显示动画
+        function showAnimation(type) {
+            const animDiv = document.getElementById('reactionAnimation');
+            if (!animDiv) return;
+            const anims = { explosion: '💥💥💥', corrosion: '🦠⚡🦠', radiation: '☢️💀☢️' };
+            animDiv.textContent = anims[type] || '🧪✨';
+            setTimeout(() => { if (animDiv.textContent) animDiv.textContent = ''; }, 2000);
+        }
+
+        // 显示反应记录
+        function showReactionLog() {
+            if (reactionLog.length === 0) {
+                alert('暂无反应记录');
+                return;
+            }
+            let log = '📜 化学反应记录\n' + '═'.repeat(30) + '\n';
+            reactionLog.forEach(entry => {
+                log += `[${entry.time}] ${entry.message}\n`;
+            });
+            alert(log);
+        }
+
+        // 显示错误
+        function showError(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'error-toast';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // 回车键支持
+        document.getElementById('playerName')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createRoom();
+        });
+        document.getElementById('roomCode')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinRoom();
+        });
+        
+        // 房间代码自动大写
+        document.getElementById('roomCode')?.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    </script>
+</body>
+</html>
